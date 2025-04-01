@@ -20,10 +20,11 @@
           let secondDiv = propertyValueElement.querySelectorAll("div")[1];
           if (secondDiv) {
               let bgColor = window.getComputedStyle(secondDiv).backgroundColor;
-              node.style.borderRadius = "12px";
-              node.style.overflow = "hidden";
-              node.style.background = `linear-gradient(to bottom, ${bgColor}, transparent)`;
-              node.style.animation = "gradientFade 3s infinite alternate";
+                node.style.position = "relative";
+                node.style.borderRadius = "12px"; // Mantiene gli angoli arrotondati
+                node.style.overflow = "hidden";
+                node.style.background = `linear-gradient(${bgColor} 30%, transparent 70%) 0% 0% / 120% 120%`;
+                node.style.animation = "gradientFade 4s ease-in-out infinite alternate";
           }
       }
   }
@@ -174,12 +175,12 @@
   const style = document.createElement("style");
   style.innerHTML = `
   @keyframes gradientFade {
-      from {
-          opacity: 0.8;
-      }
-      to {
-          opacity: 1;
-      }
+    0% {
+      background-position: 50% 20%;
+    }
+    100% {
+      background-position: 50% 90%;
+    }
   }`;
   document.head.appendChild(style);
 
