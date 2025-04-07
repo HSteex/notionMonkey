@@ -13,6 +13,9 @@
 // ==/UserScript==
 
 (function() {
+  //VARIABLES
+  var keystrokeMap = {};
+
   // Change background color adding a fade animation matching the first tag color
   function bgColor(node) {
       let propertyValueElement = node.querySelector('[data-testid="property-value"]');
@@ -40,6 +43,30 @@
             node.style.boxShadow = `0 0 10px ${bgColor}`;
           }
       }
+  }
+  // Function that shows/hide properties
+  function showProperties(event) {
+    let checked = event.currentTarget.checked;
+    let nodes = document.querySelectorAll(".notion-collection-item");
+    if(!checked) {
+      nodes.forEach((node) => {
+        //Change background color for better looks
+        let propertyValueElement = node.querySelector('[data-testid="property-value"]').querySelectorAll("div")[1];
+        backColor = window.getComputedStyle(propertyValueElement).backgroundColor;
+        node.style.background = `linear-gradient(${backColor} 70%, transparent 90%) 0% 0% / 110% 110%`;
+
+        let allDivs = Array.from(node.querySelector("a").children).filter(child => child.tagName === "DIV");
+        let propertiesDiv = allDivs[allDivs.length - 1];
+        propertiesDiv.style.display = "none";
+      });
+    }else{
+      nodes.forEach((node) => {
+        bgColor(node);
+        let allDivs = Array.from(node.querySelector("a").children).filter(child => child.tagName === "DIV");
+        let propertiesDiv = allDivs[allDivs.length - 1];
+        propertiesDiv.style.display = "flex";
+      });
+    }
   }
   // Function that add settings button with a little modal
   function addSettings(node) {
@@ -82,11 +109,15 @@
             <div style="display: inline-grid">
               <div class="setting">
                   <input type="checkbox" id="bgColor" name="bgColor">
-                  <label for="setting1">Background colors</label>
+                  <label for="bgColor">Background colors</label>
               </div>
               <div class="setting">
                   <input type="checkbox" id="borderColor" name="borderColor">
-                  <label for="setting2">Border colors</label>
+                  <label for="borderColor">Border colors</label>
+              </div>
+              <div class="setting">
+                  <input type="checkbox" id="showProperties" name="showProperties" checked="">
+                  <label for="showProperties">Show properties (Alt + \\)</label>
               </div>
             </div>
             <div style="display: inline-grid">
@@ -103,6 +134,26 @@
       }
 
       modal.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
+        if(checkbox.id == "showProperties"){
+          checkbox.checked = true;
+          checkbox.addEventListener("change", showProperties);
+          //Add listener for Alt + \
+          document.addEventListener("keydown", (event) => {
+            if (event.key === "Alt" || event.key === "\\") {
+              keystrokeMap[event.key] = true;
+              if( keystrokeMap.hasOwnProperty("Alt") && keystrokeMap.hasOwnProperty("\\") ){
+                checkbox.checked = !checkbox.checked;
+                showProperties({currentTarget: checkbox});
+              }
+            }
+          });
+
+          document.addEventListener("keyup", (event) => {
+            if (event.key === "Alt" || event.key === "\\") delete keystrokeMap[event.key];
+          });
+
+          return;
+        }
         const savedValue = GM_getValue(checkbox.id, false);
         checkbox.checked = savedValue;
         checkbox.addEventListener("change", setValue);
