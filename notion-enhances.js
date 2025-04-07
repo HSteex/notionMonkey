@@ -4,7 +4,7 @@
 // @version      2024-10-08
 // @description  try to take over the world!
 // @author       You
-// @match        https://www.notion.so/Collezione-giochini*
+// @match        https://www.notion.so/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=notion.so
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -15,34 +15,36 @@
 (function() {
   //VARIABLES
   var keystrokeMap = {};
+  var divNumberForColor = GM_getValue("divNumberForColor", 1);
+  
 
   // Change background color adding a fade animation matching the first tag color
   function bgColor(node) {
-      let propertyValueElement = node.querySelector('[data-testid="property-value"]');
-      if (propertyValueElement) {
-          let secondDiv = propertyValueElement.querySelectorAll("div")[1];
-          if (secondDiv) {
-              let bgColor = window.getComputedStyle(secondDiv).backgroundColor;
-                node.style.position = "relative";
-                node.style.borderRadius = "12px"; // Mantiene gli angoli arrotondati
-                node.style.overflow = "hidden";
-                node.style.background = `linear-gradient(${bgColor} 30%, transparent 70%) 0% 0% / 120% 120%`;
-                node.style.animation = "gradientFade 4s ease-in-out infinite alternate";
-          }
+    let propertyValueElement = node.querySelectorAll('[data-testid="property-value"]')[divNumberForColor - 1];
+    if (propertyValueElement) {
+      let secondDiv = propertyValueElement.querySelectorAll("div")[1];
+      if (secondDiv) {
+        let bgColor = window.getComputedStyle(secondDiv).backgroundColor;
+        node.style.position = "relative";
+        node.style.borderRadius = "12px"; // Mantiene gli angoli arrotondati
+        node.style.overflow = "hidden";
+        node.style.background = `linear-gradient(${bgColor} 30%, transparent 70%) 0% 0% / 120% 120%`;
+        node.style.animation = "gradientFade 4s ease-in-out infinite alternate";
       }
+    }
   }
   // Change border color matching the first tag color
   function borderColor(node) {
-      let propertyValueElement = node.querySelector('[data-testid="property-value"]');
-      if (propertyValueElement) {
-          let secondDiv = propertyValueElement.querySelectorAll("div")[1];
-          if (secondDiv) {
-            let bgColor = window.getComputedStyle(secondDiv).backgroundColor;
-            node.style.border = `3px solid ${bgColor}`;
-            node.style.borderRadius = "10px";
-            node.style.boxShadow = `0 0 10px ${bgColor}`;
-          }
+    let propertyValueElement = node.querySelectorAll('[data-testid="property-value"]')[divNumberForColor - 1];
+    if (propertyValueElement) {
+      let secondDiv = propertyValueElement.querySelectorAll("div")[1];
+      if (secondDiv) {
+        let bgColor = window.getComputedStyle(secondDiv).backgroundColor;
+        node.style.border = `3px solid ${bgColor}`;
+        node.style.borderRadius = "10px";
+        node.style.boxShadow = `0 0 10px ${bgColor}`;
       }
+    }
   }
   // Function that shows/hide properties
   function showProperties(event) {
@@ -116,12 +118,16 @@
                   <label for="borderColor">Border colors</label>
               </div>
               <div class="setting">
+                  <input type="number" min="1" id="divNumberForColor" name="divNumberForColor" style="color: black; width: 40px">
+                  <label for="divNumberForColor">Property number for color</label>
+              </div>
+              <div class="setting">
                   <input type="checkbox" id="showProperties" name="showProperties" checked="">
                   <label for="showProperties">Show properties (Alt + \\)</label>
               </div>
             </div>
             <div style="display: inline-grid">
-              <div class="close-button" style="color: red; cursor: pointer; font-size: 16px;">&times;</div>
+              <div class="close-button" style="color: red; cursor: pointer; font-size: 20px;">&times;</div>
             </div>
           </div>
       `;
@@ -129,34 +135,43 @@
       document.body.appendChild(modal);
 
       function setValue(event) {
-        const checkbox = event.target;
-        GM_setValue(checkbox.id, checkbox.checked);
+        const input = event.target;
+        if(input.type == "checkbox") GM_setValue(input.id, input.checked);
+        if(input.type == "number") GM_setValue(input.id, input.value);
       }
 
-      modal.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
-        if(checkbox.id == "showProperties"){
-          checkbox.checked = true;
-          checkbox.addEventListener("change", showProperties);
-          //Add listener for Alt + \
-          document.addEventListener("keydown", (event) => {
-            if (event.key === "Alt" || event.key === "\\") {
-              keystrokeMap[event.key] = true;
-              if( keystrokeMap.hasOwnProperty("Alt") && keystrokeMap.hasOwnProperty("\\") ){
-                checkbox.checked = !checkbox.checked;
-                showProperties({currentTarget: checkbox});
+      //Initializer for checkboxes
+      modal.querySelectorAll("input").forEach((input) => {
+        if(input.type == "checkbox"){
+          if(input.id == "showProperties"){
+            input.checked = true;
+            input.addEventListener("change", showProperties);
+            //Add listener for Alt + \
+            document.addEventListener("keydown", (event) => {
+              if (event.key === "Alt" || event.key === "\\") {
+                keystrokeMap[event.key] = true;
+                if( keystrokeMap.hasOwnProperty("Alt") && keystrokeMap.hasOwnProperty("\\") ){
+                  input.checked = !input.checked;
+                  showProperties({currentTarget: input});
+                }
               }
-            }
-          });
-
-          document.addEventListener("keyup", (event) => {
-            if (event.key === "Alt" || event.key === "\\") delete keystrokeMap[event.key];
-          });
-
-          return;
+            });
+  
+            document.addEventListener("keyup", (event) => {
+              if (event.key === "Alt" || event.key === "\\") delete keystrokeMap[event.key];
+            });
+  
+            return;
+          }
+          const savedValue = GM_getValue(input.id, false);
+          input.checked = savedValue;
+          input.addEventListener("change", setValue);  
         }
-        const savedValue = GM_getValue(checkbox.id, false);
-        checkbox.checked = savedValue;
-        checkbox.addEventListener("change", setValue);
+        if(input.type == "number"){
+          const savedValue = GM_getValue(input.id, 1);
+          input.value = savedValue;
+          input.addEventListener("change", setValue);
+        }
       });
 
       button.addEventListener('click', () => {
@@ -222,9 +237,12 @@
       });
   }
 
-  // Aggiunta dell'animazione CSS globale
+  // Add CSS for the gradient animation
   const style = document.createElement("style");
   style.innerHTML = `
+  .setting{
+    margin-bottom: 6px;
+  }
   @keyframes gradientFade {
     0% {
       background-position: 50% 20%;
