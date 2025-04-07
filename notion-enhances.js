@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Background Colorati
+// @name         Notion Enhances
 // @namespace    Violentmonkey Scripts
 // @version      2024-10-08
 // @description  try to take over the world!
